@@ -1,0 +1,31 @@
+from bs4 import BeautifulSoup
+from urllib.request import urlopen
+import re
+import random
+#
+#urlopen打开的url当中是不可以有中文的
+#所以这里也是需要我们注意的地方
+#
+base_url = "https://baike.baidu.com"
+#his用来存放已经浏览过的网页
+his = ["/item/%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB/5162711"]
+
+
+
+#接下来，我们要寻找网页上所有符合要求的 /item/ 网址
+#这样我们找到的网址都是 /item/%xx%xx%xx... 这样的格式了. 
+#之后我们在这些过滤后的网页中随机选一个, 当做下一个要爬的网页. 
+#不过有时候很不幸, 在 sub_urls 中并不能找到合适的网页,
+#我们就往回跳一个网页, 回到之前的网页中再随机抽一个网页做同样的事.
+for i in range(20):
+    url = base_url +his[-1]
+
+    html = urlopen(url).read().decode('utf-8')
+    soup = BeautifulSoup(html,features='lxml')
+    print(soup.find('h1').get_text(),"  url:",his[-1])
+    sub_urls = soup.find_all("a",{"target":"_blank","href":re.compile(
+        "/item/(%.{2})+$")})
+    if len(sub_urls) != 0:
+        his.append(random.sample(sub_urls,1)[0]['href'])
+    else:
+        his.pop()
